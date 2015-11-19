@@ -31,11 +31,11 @@ int main(void)
 	return 0;
 }
 
-void readbytes(void) {
+void readbytes(void) {//need to extract length field to know how much to read
 	const char *directory = "/usr/local/share/codec/hello.pcap"; //read from this
 	unsigned char temp[200] = {0}; //store in this
-	unsigned int count;
-	//const char *directory2 = strcat(getenv("HOME"), "work/.git/codec/sample2.txt"); //write to this
+	int tempint;
+	int count;
 
 	FILE *input = fopen(directory, "r");
 	//FILE *output = fopen(directory2, "w");
@@ -43,12 +43,17 @@ void readbytes(void) {
 	//read(descriptor, input, size);
 	//write(descriptor2, output, size);
 
-	fseek(input, 0, SEEK_SET); 
-	fread(temp, sizeof(temp), 1, input);
+	fseek(input, 84, SEEK_SET); //positioned to read the length (2 bytes)
+	fread(temp, 2, 1, input);
 
-	for(count = 0; count < sizeof(temp); count++) {
-		printf("%x\n", temp[count]);
+	//char *value = strcat(temp[0], temp[1]);
+	//printf("%s\n", value);
+	tempint = temp[1];
+	unsigned char *next = calloc(tempint, 1); //calloc is supposed to be used for allocating heap memory for arrays. But this isn't working.
+	fseek(input, 82, SEEK_SET);
+	fread(next, 1, tempint, input);
+	for(count = 0; count < tempint; count++) {
+		printf("%x", next[count]);
 	}
-
-	//successfully reading bytes and printing them to screen. 
+	printf("\n");
 }
