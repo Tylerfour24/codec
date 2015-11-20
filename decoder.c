@@ -16,44 +16,51 @@ int main(void)
 		char version[;
 		char sequence;
 		char type;
-		char length;
+		char length; this is all header practice
 		char source;
 		char dest;
 	} header;*/
 
-	int mask1 = 0xf0;
+	/*int mask1 = 0xf0;
 	int mask2 = 0x0f;
 	int value = 0xff;
 	int result1 = mask1 & value;
-	int result2 = mask2 & value;
+	int result2 = mask2 & value; this is all bit masking practice
 	printf("%x\n", result1);
 	printf("%x\n", result2);
-	return 0;
+	return 0;*/
 }
 
 void readbytes(void) {//need to extract length field to know how much to read
 	const char *directory = "/usr/local/share/codec/hello.pcap"; //read from this
-	unsigned char temp[200] = {0}; //store in this
+	unsigned char temp[200] = {0}; //store in this first
+	unsigned char *next; //store in this second
 	int tempint;
 	int count;
 
 	FILE *input = fopen(directory, "r");
-	//FILE *output = fopen(directory2, "w");
-
-	//read(descriptor, input, size);
-	//write(descriptor2, output, size);
 
 	fseek(input, 84, SEEK_SET); //positioned to read the length (2 bytes)
 	fread(temp, 2, 1, input);
 
-	//char *value = strcat(temp[0], temp[1]);
-	//printf("%s\n", value);
 	tempint = temp[1];
-	unsigned char *next = calloc(tempint, 1); //calloc is supposed to be used for allocating heap memory for arrays. But this isn't working.
-	fseek(input, 82, SEEK_SET);
+	next = calloc(tempint, 1);
+	fseek(input, 94, SEEK_SET);
 	fread(next, 1, tempint, input);
 	for(count = 0; count < tempint; count++) {
-		printf("%x", next[count]);
+		printf("%c", next[count]);
 	}
 	printf("\n");
-}
+} 
+
+/*note byte format of .pcap files is as follows
+ *global = 24 bytes
+ *packet = 16 bytes
+ *ethernet = 14 bytes
+ *ipv4 = 20 bytes
+ *udp = 8 bytes
+ *meditrik header = 12 bytes
+ *PAYLOAD = variable, but denoted by value of length field - 12
+ *ergo, read length field, subract 12 from value, position at byte 94, read newvalue bytes.*/
+
+
