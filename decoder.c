@@ -7,14 +7,20 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-void getlength(const char *directory);
-void gettype(const char *directory);
+void getlength(FILE *input);
+int gettype(FILE *input, int *result);
 
 int main(void)
 {
 	const char *directory = "/usr/local/share/codec/hello.pcap";
-	getlength(directory);
-	gettype(directory);
+	FILE *input = fopen(directory, "r");
+	int *result = malloc(sizeof(int*)); //holy shit I did this
+	
+
+	gettype(input, result);
+	if (*result == 3) {
+		getlength(input);
+	}
 	//gettype();
 	/*struct Headers {
 		char version[;
@@ -35,13 +41,11 @@ int main(void)
 	return 0;*/
 }
 
-void getlength(const char *directory) {//need to extract length field to know how much to read
+void getlength(FILE *input) {//need to extract length field to know how much to read
 	unsigned char temp[200] = {0}; //store in this first
 	unsigned char *next; //store in this second
 	int tempint;
 	int count;
-
-	FILE *input = fopen(directory, "r");
 
 	fseek(input, 84, SEEK_SET); //positioned to read the length (2 bytes)
 	fread(temp, 2, 1, input);
@@ -66,25 +70,24 @@ void getlength(const char *directory) {//need to extract length field to know ho
  *PAYLOAD = variable, but denoted by value of (length field - 12)
  *ergo, read length field, subract 12 from value, position at byte 94, read newvalue bytes.*/
 
-void gettype(const char *directory) {
-//type field is 3 bits, bit masking should fulfill this easily
+int gettype(FILE *input, int *result) {
+
 	int mask; //= 0x07
 	int value; //= 
-	int result; //= mask & value
+	//int result; //= mask & value
 
 	unsigned char temp[200] = {0}; //store in this first
 	//unsigned char *next; //store in this second
 	//int tempint;
 	//int count;
 
-	FILE *input = fopen(directory, "r");
-
 	fseek(input, 83, SEEK_SET); //positioned to read the type (last 3 bits of 1 byte)
 	fread(temp, 1, 1, input);
 
 	mask = 0x07;
 	value = temp[0];
-	result = mask & value;
-	printf("%d\n", result); //successfully reads value, need if statements to establish rules per value
+	*result = mask & value;
+	printf("%d\n", *result); //successfully reads value, need if statements to establish rules per value
 
+	return *result;
 }
