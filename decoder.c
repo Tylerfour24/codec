@@ -7,19 +7,31 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-void getlength(FILE *input);
+void readmessage(FILE *input);
 int gettype(FILE *input, int *result);
 
 int main(void)
 {
-	const char *directory = "/usr/local/share/codec/hello.pcap";
+	const char *directory = "/usr/local/share/codec/hello.pcap"; //this will become argv[1] and subsequent argv[n]s may have to be added
 	FILE *input = fopen(directory, "r");
-	int *result = malloc(sizeof(int*)); //holy shit I did this
+	int *result = malloc(sizeof(int*)); //holy shit I did this right
 	
 
 	gettype(input, result);
-	if (*result == 3) {
-		getlength(input);
+	if (*result == 3) { // this is where I need to differentiate between what type of payload I've found
+		readmessage(input);
+	}
+	else if (*result == 2) {
+		printf("The result is 2\n");
+	}
+	else if (*result == 1) {
+		printf("The result is 1\n");
+	}
+	else if (*result == 0) {
+		printf("The result is 0\n");
+	}
+	else {//this does successfully differentiate between the different "type" values
+		exit(0);
 	}
 	//gettype();
 	/*struct Headers {
@@ -30,18 +42,28 @@ int main(void)
 		char source;
 		char dest;
 	} header;*/
-
-	/*int mask1 = 0xf0;
-	int mask2 = 0x0f;
-	int value = 0xff;
-	int result1 = mask1 & value;
-	int result2 = mask2 & value; this is all bit masking practice
-	printf("%x\n", result1);
-	printf("%x\n", result2);
-	return 0;*/
+	free(result);
+	return 0;
 }
 
-void getlength(FILE *input) {//need to extract length field to know how much to read
+int gettype(FILE *input, int *result) {
+
+	int mask;
+	int value;
+
+	unsigned char temp[200] = {0};
+	fseek(input, 83, SEEK_SET); //positioned to read the type (last 3 bits of 1 byte)
+	fread(temp, 1, 1, input);
+
+	mask = 0x07;
+	value = temp[0];
+	*result = mask & value;
+	printf("%d\n", *result);
+
+	return *result;
+}
+
+void readmessage(FILE *input) {//need to extract length field to know how much to read
 	unsigned char temp[200] = {0}; //store in this first
 	unsigned char *next; //store in this second
 	int tempint;
@@ -58,6 +80,7 @@ void getlength(FILE *input) {//need to extract length field to know how much to 
 		printf("%c", next[count]);
 	}
 	printf("\n");
+	free(next);
 } 
 
 /*note byte format of .pcap files is as follows
@@ -70,24 +93,4 @@ void getlength(FILE *input) {//need to extract length field to know how much to 
  *PAYLOAD = variable, but denoted by value of (length field - 12)
  *ergo, read length field, subract 12 from value, position at byte 94, read newvalue bytes.*/
 
-int gettype(FILE *input, int *result) {
 
-	int mask; //= 0x07
-	int value; //= 
-	//int result; //= mask & value
-
-	unsigned char temp[200] = {0}; //store in this first
-	//unsigned char *next; //store in this second
-	//int tempint;
-	//int count;
-
-	fseek(input, 83, SEEK_SET); //positioned to read the type (last 3 bits of 1 byte)
-	fread(temp, 1, 1, input);
-
-	mask = 0x07;
-	value = temp[0];
-	*result = mask & value;
-	printf("%d\n", *result); //successfully reads value, need if statements to establish rules per value
-
-	return *result;
-}
