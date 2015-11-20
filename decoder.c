@@ -7,11 +7,15 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-void readbytes(void);
+void getlength(const char *directory);
+void gettype(const char *directory);
 
 int main(void)
 {
-	readbytes();
+	const char *directory = "/usr/local/share/codec/hello.pcap";
+	getlength(directory);
+	gettype(directory);
+	//gettype();
 	/*struct Headers {
 		char version[;
 		char sequence;
@@ -31,8 +35,7 @@ int main(void)
 	return 0;*/
 }
 
-void readbytes(void) {//need to extract length field to know how much to read
-	const char *directory = "/usr/local/share/codec/hello.pcap"; //read from this
+void getlength(const char *directory) {//need to extract length field to know how much to read
 	unsigned char temp[200] = {0}; //store in this first
 	unsigned char *next; //store in this second
 	int tempint;
@@ -60,7 +63,28 @@ void readbytes(void) {//need to extract length field to know how much to read
  *ipv4 = 20 bytes
  *udp = 8 bytes
  *meditrik header = 12 bytes
- *PAYLOAD = variable, but denoted by value of length field - 12
+ *PAYLOAD = variable, but denoted by value of (length field - 12)
  *ergo, read length field, subract 12 from value, position at byte 94, read newvalue bytes.*/
 
+void gettype(const char *directory) {
+//type field is 3 bits, bit masking should fulfill this easily
+	int mask; //= 0x07
+	int value; //= 
+	int result; //= mask & value
 
+	unsigned char temp[200] = {0}; //store in this first
+	//unsigned char *next; //store in this second
+	//int tempint;
+	//int count;
+
+	FILE *input = fopen(directory, "r");
+
+	fseek(input, 83, SEEK_SET); //positioned to read the type (last 3 bits of 1 byte)
+	fread(temp, 1, 1, input);
+
+	mask = 0x07;
+	value = temp[0];
+	result = mask & value;
+	printf("%d\n", result); //successfully reads value, need if statements to establish rules per value
+
+}
