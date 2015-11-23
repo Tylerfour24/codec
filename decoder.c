@@ -1,52 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+//#include <stdint.h>
+//#include <string.h> //Apparently I no longer need any of these
+//#include <unistd.h> //Since the program compiles without them
+//#include <sys/types.h> //But I'm leaving them here in case I need them
+//#include <sys/stat.h> //In the future.
+//#include <fcntl.h>
 
-void readmessage(FILE *input);
-int gettype(FILE *input, int *result);
+
+int getfiletype(FILE *input, int *result);
+void readfile(FILE *input, int *result);
 
 int main(void)
 {
 	const char *directory = "/usr/local/share/codec/hello.pcap"; //this will become argv[1] and subsequent argv[n]s may have to be added
 	FILE *input = fopen(directory, "r");
-	int *result = malloc(sizeof(int*)); //holy shit I did this right
-	
+	int *result = malloc(sizeof(int*));
 
-	gettype(input, result);
-	if (*result == 3) { // this is where I need to differentiate between what type of payload I've found
-		readmessage(input);
-	}
-	else if (*result == 2) {
-		printf("The result is 2\n");
-	}
-	else if (*result == 1) {
-		printf("The result is 1\n");
-	}
-	else if (*result == 0) {
-		printf("The result is 0\n");
-	}
-	else {//this does successfully differentiate between the different "type" values
-		exit(0);
-	}
-	//gettype();
+	getfiletype(input, result);
+	readfile(input, result);
+
 	/*struct Headers {
-		char version[;
+		char version;
 		char sequence;
 		char type;
-		char length; this is all header practice
+		char length; this is all struct practice
 		char source;
 		char dest;
 	} header;*/
+
 	free(result);
 	return 0;
 }
 
-int gettype(FILE *input, int *result) {
+//This function determines the type of packet
+int getfiletype(FILE *input, int *result) {
 
 	int mask;
 	int value;
@@ -58,12 +46,13 @@ int gettype(FILE *input, int *result) {
 	mask = 0x07;
 	value = temp[0];
 	*result = mask & value;
-	printf("%d\n", *result);
 
 	return *result;
 }
 
-void readmessage(FILE *input) {//need to extract length field to know how much to read
+//this function determines packet length and prints the payload to screen (someday it'll even print it in a readable format)
+void readfile(FILE *input, int *result) {
+
 	unsigned char temp[200] = {0}; //store in this first
 	unsigned char *next; //store in this second
 	int tempint;
@@ -74,14 +63,44 @@ void readmessage(FILE *input) {//need to extract length field to know how much t
 
 	tempint = temp[1];
 	next = calloc(tempint, 1);
+
 	fseek(input, 94, SEEK_SET);
 	fread(next, 1, tempint, input);
-	for(count = 0; count < tempint; count++) {
-		printf("%c", next[count]);
+
+
+	if(*result == 3) {
+		printf("MESSAGE\n");
+		for(count = 0; count < tempint; count++) {
+			printf("%c", next[count]);
+		}
+	}
+
+	else if (*result == 2) {
+		printf("GPS\n");
+		for(count = 0; count < tempint; count++) {
+			printf("%x", next[count]); //prints hex values until I figure out how to make it human readable
+		}
+	}
+
+	else if (*result == 1) {
+		printf("COMMAND\n");
+		for(count = 0; count < tempint; count++) {
+			printf("%x", next[count]); //prints hex values until I figure out how to make it human readable
+		}
+	}
+
+	else if (*result == 0) {
+		printf("STATUS\n");
+		for(count = 0; count < tempint; count++) {
+			printf("%x", next[count]); //prints hex values until I figure out how to make it human readable
+		}
+	}
+	else {//this successfully differentiates between the different "type" values
+		exit(0);
 	}
 	printf("\n");
 	free(next);
-} 
+}
 
 /*note byte format of .pcap files is as follows
  *global = 24 bytes
