@@ -1,57 +1,50 @@
 #include <stdio.h>
 #include <stdlib.h>
-//#include <stdint.h>
-//#include <string.h> //Apparently I no longer need any of these
-//#include <unistd.h> //Since the program compiles without them
-//#include <sys/types.h> //But I'm leaving them here in case I need them
-//#include <sys/stat.h> //In the future.
-//#include <fcntl.h>
 
-
-int getfiletype(FILE *input, int *result);
-void readfile(FILE *input, int *result);
+int getfiletype(FILE *input, int *type);
+void readfile(FILE *input, int *type);
 
 int main(void)
 {
-	const char *directory = "/usr/local/share/codec/hello.pcap"; //this will become argv[1] and subsequent argv[n]s may have to be added
+	const char *directory = "/usr/local/share/codec/status.pcap"; //this will become argv[1] and subsequent argv[n]s may have to be added
 	FILE *input = fopen(directory, "r");
-	int *result = malloc(sizeof(int*));
+	int *type = malloc(sizeof(int*));
 
-	getfiletype(input, result);
-	readfile(input, result);
+	getfiletype(input, type);
+	readfile(input, type);
 
-	/*struct Headers {
-		char version;
-		char sequence;
-		char type;
-		char length; this is all struct practice
-		char source;
-		char dest;
-	} header;*/
-
-	free(result);
+	free(type);
 	return 0;
 }
 
 //This function determines the type of packet
-int getfiletype(FILE *input, int *result) {
+int getfiletype(FILE *input, int *type) {
 
 	int mask;
 	int value;
-
+	int shiftbits;
+	
 	unsigned char temp[200] = {0};
-	fseek(input, 83, SEEK_SET); //positioned to read the type (last 3 bits of 1 byte)
-	fread(temp, 1, 1, input);
-
+	fseek(input, 82, SEEK_SET); //positioned to read the type (last 3 bits of 1 byte)
+	fread(temp, 1, 2, input); 	//switched this to one thing of two bytes instead of two things of one byte each
+															//in the hopes of making bit shifting easier, but it reads the type wrong now
 	mask = 0x07;
-	value = temp[0];
-	*result = mask & value;
+	value = temp[1];
+	*type = mask & value;
 
-	return *result;
+	shiftbits = temp[0] >> 4;
+	printf("%d\n", shiftbits); //prints version #
+
+	mask = 0x0f;
+	value = temp[0];
+	shiftbits = (mask & temp[0]) + (temp[1] >> 3);
+	printf("%d\n", shiftbits); //prints sequence #
+	
+	return *type;
 }
 
 //this function determines packet length and prints the payload to screen (someday it'll even print it in a readable format)
-void readfile(FILE *input, int *result) {
+void readfile(FILE *input, int *type) {
 
 	unsigned char temp[200] = {0}; //store in this first
 	unsigned char *next; //store in this second
@@ -68,36 +61,38 @@ void readfile(FILE *input, int *result) {
 	fread(next, 1, tempint, input);
 
 
-	if(*result == 3) {
+	if(*type == 3) {
 		printf("MESSAGE\n");
 		for(count = 0; count < tempint; count++) {
 			printf("%c", next[count]);
 		}
 	}
 
-	else if (*result == 2) {
+	else if (*type == 2) {
 		printf("GPS\n");
 		for(count = 0; count < tempint; count++) {
 			printf("%x", next[count]); //prints hex values until I figure out how to make it human readable
 		}
 	}
 
-	else if (*result == 1) {
+	else if (*type == 1) {
 		printf("COMMAND\n");
 		for(count = 0; count < tempint; count++) {
 			printf("%x", next[count]); //prints hex values until I figure out how to make it human readable
 		}
 	}
 
-	else if (*result == 0) {
+	else if (*type == 0) {
 		printf("STATUS\n");
 		for(count = 0; count < tempint; count++) {
 			printf("%x", next[count]); //prints hex values until I figure out how to make it human readable
 		}
 	}
+
 	else {//this successfully differentiates between the different "type" values
 		exit(0);
 	}
+
 	printf("\n");
 	free(next);
 }
@@ -111,5 +106,3 @@ void readfile(FILE *input, int *result) {
  *meditrik header = 12 bytes
  *PAYLOAD = variable, but denoted by value of (length field - 12)
  *ergo, read length field, subract 12 from value, position at byte 94, read newvalue bytes.*/
-
-
