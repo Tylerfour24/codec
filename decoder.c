@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int getfiletype(FILE *input, int *type);
-//create function to get source and destination IDS, or add said functionality into getfiletype function
+int getfiletype(FILE *input, int *type);//create function to get source and destination IDS, or add said functionality into getfiletype function
 void readfile(FILE *input, int *type);
 
 int main(void)
@@ -26,7 +25,7 @@ int getfiletype(FILE *input, int *type) {
 	int shiftbits;
 	
 	unsigned char temp[200] = {0};
-	fseek(input, 82, SEEK_SET); //positioned to read the type (last 3 bits of 1 byte)
+	fseek(input, 82, SEEK_SET); //positioned to read version, sequence, and type
 	fread(temp, 1, 2, input);
 															
 	mask = 0x07;
@@ -40,7 +39,13 @@ int getfiletype(FILE *input, int *type) {
 	value = temp[0];
 	shiftbits = (mask & temp[0]) + (temp[1] >> 3);
 	printf("Sequence: %d\n", shiftbits); //prints sequence #
-	
+
+	fseek(input, 86, SEEK_SET); //positioned to read source and destination IDs
+	fread(temp, 1, 8, input);
+
+	printf("Source: %d.%d.%d.%d\n", temp[0], temp[1], temp[2], temp[3]);
+	printf("Destination: %d.%d.%d.%d\n", temp[4], temp[5], temp[6], temp[7]);
+
 	return *type;
 }
 
