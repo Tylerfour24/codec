@@ -2,11 +2,12 @@
 #include <stdlib.h>
 
 int getfiletype(FILE *input, int *type);
+//create function to get source and destination IDS, or add said functionality into getfiletype function
 void readfile(FILE *input, int *type);
 
 int main(void)
 {
-	const char *directory = "/usr/local/share/codec/status.pcap"; //this will become argv[1] and subsequent argv[n]s may have to be added
+	const char *directory = "/usr/local/share/codec/hello.pcap"; //this will become argv[1] and subsequent argv[n]s may have to be added
 	FILE *input = fopen(directory, "r");
 	int *type = malloc(sizeof(int*));
 
@@ -26,19 +27,19 @@ int getfiletype(FILE *input, int *type) {
 	
 	unsigned char temp[200] = {0};
 	fseek(input, 82, SEEK_SET); //positioned to read the type (last 3 bits of 1 byte)
-	fread(temp, 1, 2, input); 	//switched this to one thing of two bytes instead of two things of one byte each
-															//in the hopes of making bit shifting easier, but it reads the type wrong now
+	fread(temp, 1, 2, input);
+															
 	mask = 0x07;
 	value = temp[1];
 	*type = mask & value;
 
 	shiftbits = temp[0] >> 4;
-	printf("%d\n", shiftbits); //prints version #
+	printf("Version: %d\n", shiftbits); //prints version #
 
 	mask = 0x0f;
 	value = temp[0];
 	shiftbits = (mask & temp[0]) + (temp[1] >> 3);
-	printf("%d\n", shiftbits); //prints sequence #
+	printf("Sequence: %d\n", shiftbits); //prints sequence #
 	
 	return *type;
 }
@@ -62,28 +63,28 @@ void readfile(FILE *input, int *type) {
 
 
 	if(*type == 3) {
-		printf("MESSAGE\n");
+		printf("MESSAGE: ");
 		for(count = 0; count < tempint; count++) {
 			printf("%c", next[count]);
 		}
 	}
 
 	else if (*type == 2) {
-		printf("GPS\n");
+		printf("GPS:\n");
 		for(count = 0; count < tempint; count++) {
 			printf("%x", next[count]); //prints hex values until I figure out how to make it human readable
 		}
 	}
 
 	else if (*type == 1) {
-		printf("COMMAND\n");
+		printf("COMMAND:\n");
 		for(count = 0; count < tempint; count++) {
 			printf("%x", next[count]); //prints hex values until I figure out how to make it human readable
 		}
 	}
 
 	else if (*type == 0) {
-		printf("STATUS\n");
+		printf("STATUS:\n");
 		for(count = 0; count < tempint; count++) {
 			printf("%x", next[count]); //prints hex values until I figure out how to make it human readable
 		}
@@ -97,7 +98,7 @@ void readfile(FILE *input, int *type) {
 	free(next);
 }
 
-/*note byte format of .pcap files is as follows
+/*note byte format of .pcap files is as follows:
  *global = 24 bytes
  *packet = 16 bytes
  *ethernet = 14 bytes
@@ -105,4 +106,4 @@ void readfile(FILE *input, int *type) {
  *udp = 8 bytes
  *meditrik header = 12 bytes
  *PAYLOAD = variable, but denoted by value of (length field - 12)
- *ergo, read length field, subract 12 from value, position at byte 94, read newvalue bytes.*/
+ *:ergo, read length field, subract 12 from value, position at byte 94, read newvalue bytes.*/
