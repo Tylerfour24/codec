@@ -19,6 +19,8 @@ int main(int argc, char **argv)
 			getfiletype(input, type);
 			readfile(input, type);
 
+			printf("\n");
+
 		//otherwise
 			//error occured, exit program
 	}
@@ -63,18 +65,10 @@ int getfiletype(FILE *input, int *type) {
 void readfile(FILE *input, int *type) {
 
 	unsigned char temp[200] = {0}; 
-	/*union Buffer {
-		unsigned char *cnext;
-		double *dnext;
-		float *fnext;
-	};
-	this union is meant to account for the different data types I have to deal with, but let's see if I can do it without first.
-	union Buffer buffer;*/
-		
 	unsigned char *next; //turn this into a union
 	int tempint;
 
-	//Consider making the following a switch statement
+	//Many of the following possibilities print incorrect values, going to work on that more tonight
 	if(*type == 3) { //This section works
 		int count;
 
@@ -94,7 +88,7 @@ void readfile(FILE *input, int *type) {
 		free(next);
 	}
 
-	else if (*type == 2) { //This section works (tentatively, values could be wrong but it produces values)
+	else if (*type == 2) {
 		float longitude;
 		float latitude;
 		float altitude;
@@ -163,7 +157,7 @@ void readfile(FILE *input, int *type) {
 		free(next);
 	}
 
-	else if (*type == 0) { //This prints no matter what for some reason
+	else if (*type == 0) {
 		double battery;
 		unsigned short glucose;
 		unsigned short capsaicin;
@@ -195,13 +189,3 @@ void readfile(FILE *input, int *type) {
 
 	printf("\n");
 }
-
-/*note byte format of .pcap files is as follows:
- *global = 24 bytes
- *packet = 16 bytes
- *ethernet = 14 bytes
- *ipv4 = 20 bytes
- *udp = 8 bytes
- *meditrik header = 12 bytes
- *PAYLOAD = variable, but denoted by value of (length field - 12)
- *:ergo, read length field, subract 12 from value, position at byte 94, read newvalue bytes.*/
