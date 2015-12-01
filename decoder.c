@@ -4,14 +4,24 @@
 int getfiletype(FILE *input, int *type);
 void readfile(FILE *input, int *type);
 
-int main(void)
+int main(int argc, char **argv)
 {
-	const char *directory = "/usr/local/share/codec/status.pcap"; //this will become argv[1] and subsequent argv[n]s may have to be added
-	FILE *input = fopen(directory, "r");
+	const char *directory;
+	FILE *input;
 	int *type = malloc(sizeof(int*));
+	int files;
 
-	getfiletype(input, type);
-	readfile(input, type);
+	for(files = 1; files < argc; files++) {
+		//if argument is valid
+			directory = argv[files];
+			input = fopen(directory, "r");
+
+			getfiletype(input, type);
+			readfile(input, type);
+
+		//otherwise
+			//error occured, exit program
+	}
 
 	free(type);
 	return 0;
@@ -27,12 +37,12 @@ int getfiletype(FILE *input, int *type) {
 	unsigned char temp[200] = {0};
 	fseek(input, 82, SEEK_SET); //positioned to read version, sequence, and type
 	fread(temp, 1, 2, input);
-															
+
 	mask = 0x07;
 	value = temp[1];
 	*type = mask & value;
 
-	shiftbits = temp[0] >> 4;
+	shiftbits = temp[0] >> 4; //this is printing 4, should be printing 1
 	printf("Version: %d\n", shiftbits); //prints version #
 
 	mask = 0x0f;
@@ -153,7 +163,7 @@ void readfile(FILE *input, int *type) {
 		free(next);
 	}
 
-	else if (*type == 0) { //This section works (tentatively, values could be wrong but it produces values)
+	else if (*type == 0) { //This prints no matter what for some reason
 		double battery;
 		unsigned short glucose;
 		unsigned short capsaicin;
