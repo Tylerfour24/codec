@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 	int files;
 
 	for(files = 1; files < argc; files++) {
-		//if argument is valid
+		//if path denotes pcap file (implement if/else if time permits)
 			directory = argv[files];
 			input = fopen(directory, "r");
 
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-//This function determines the type of packet
+//function responsible for determining pcap type
 int getfiletype(FILE *input, int *type) {
 
 	int mask;
@@ -56,6 +56,8 @@ int getfiletype(FILE *input, int *type) {
 	shiftbits = (mask & temp[0]) + (temp[1] >> 3);
 	printf("Sequence: %d\n", shiftbits); //prints sequence #
 
+	printf("Type: %d\n", *type); //prints type #
+
 	fseek(input, 86, SEEK_SET); //positioned to read source and destination IDs
 	fread(temp, 4, 2, input);
 
@@ -65,13 +67,12 @@ int getfiletype(FILE *input, int *type) {
 	return *type;
 }
 
-//this function determines packet length and prints the payload to screen
+//function that calls proper function to handle payload
 void readfile(FILE *input, int *type) {
 	unsigned char temp[200] = {0};
 	unsigned char *next = {0};
 	int tempint = 0;
 
-	//Many of the following possibilities print incorrect values, going to work on that more tonight
 	if(*type == 3) {
 		printmessage(input, next, tempint, temp);
 	}
@@ -88,21 +89,22 @@ void readfile(FILE *input, int *type) {
 		printstatus(input, next);
 	}
 
-	else { //this successfully differentiates between the different "type" values
+	else {
 		exit(0);
 	}
 
 	printf("\n");
 }
 
+//function responsible for message payload
 void printmessage(FILE *input, unsigned char *next, int tempint, unsigned char *temp) {
 	int count;
 
-	printf("MESSAGE\n");
 	fseek(input, 84, SEEK_SET); //positioned to read the length (2 bytes)
 	fread(temp, 1, 2, input);
 
 	tempint = temp[1];
+	printf("Length: %d\n", tempint); //prints message length
 	next = calloc(tempint, 1);
 
 	fseek(input, 94, SEEK_SET);
@@ -114,12 +116,12 @@ void printmessage(FILE *input, unsigned char *next, int tempint, unsigned char *
 	free(next);
 }
 
+//function responsible for gps payload
 void printgps(FILE *input, unsigned char *next) {
 	float longitude;
 	float latitude;
 	float altitude;
 
-	printf("GPS\n");
 	next = calloc(2, 8);
 	fread(next, 8, 2, input);
 
@@ -139,11 +141,11 @@ void printgps(FILE *input, unsigned char *next) {
 	free(next);
 }
 
+//function responsible for command payload
 void printcommand(FILE *input, unsigned char *next) {
 	unsigned short command;
 	unsigned short parameter;
 
-	printf("COMMAND\n");
 	next = calloc(2, 2);
 	fread(next, 2, 2, input);
 
@@ -183,13 +185,13 @@ void printcommand(FILE *input, unsigned char *next) {
 	free(next);
 }
 
+//function responsible for status payload
 void printstatus(FILE *input, unsigned char *next) {
 	double battery;
 	unsigned short glucose;
 	unsigned short capsaicin;
 	unsigned short omorfine;
 
-	printf("STATUS\n");
 	next = calloc(1, 8);
 	fread(next, 8, 1, input);
 
