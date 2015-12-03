@@ -132,10 +132,10 @@ void printgps(FILE *input, unsigned char *next) {
 	printf("Latitude: %.2f\n", latitude);
 	free(next);
 
-	next = calloc(5, 4);
-	fread(next, 4, 5, input);
+	next = calloc(1, 4);
+	fread(next, 4, 1, input);
 
-	altitude = next[4];
+	altitude = next[0];
 
 	printf("Altitude: %.2f", altitude);
 	free(next);
@@ -199,8 +199,8 @@ void printstatus(FILE *input, unsigned char *next) {
 	printf("Battery Power: %f\n", battery);
 	free(next);
 
-	next = calloc(7, 2);
-	fread(next, 2, 7, input);
+	next = calloc(3, 2);
+	fread(next, 2, 3, input);
 		
 	glucose = next[4];
 	capsaicin = next[5];
