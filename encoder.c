@@ -18,15 +18,12 @@ int main(void)
 	unsigned int version = 0;
 	unsigned int sequence = 0;
 	unsigned int type = 0;
+	unsigned int paylen = 0;
 	unsigned int source = 0;
 	unsigned int dest = 0;
-	unsigned int length = 0;
-	unsigned char message[20] = {0};
-	unsigned int count = 0;
 
-//possible use of strncpy?
-
-//gonna start by writing 82 bytes into the file, all of which should be zero
+	//unsigned char message[20] = {0};
+	//unsigned int count = 0;
 
 	makeheaders(output, empty);
 
@@ -39,19 +36,34 @@ int main(void)
 	fscanf(input, "\nDestination: %x", &dest);
 
 	if(type == 3) {
-		fscanf(input, "\nLength: %x", &length); //determine length of hello.txt
-		length -= 12;
-		fscanf(input, "\n");
-		for(count = 0; count < length; count++) {
+		fscanf(input, "\nLength: %x", &paylen); //determine length of hello.txt
+		paylen -= 12;
+		/*fscanf(input, "\n");
+		for(count = 0; count < paylen; count++) {
 			fscanf(input, "%c", message);
 			//printf("%c", message[count]); //never do this again OoO
-		}
+		}*/
 	}
 
 	//unsigned short wrongway = ( (version << 12) ^ (sequence << 7) ^ type);
+	version = version << 28;
+	sequence = sequence << 23;
+	type = type << 16;
+	
+	//the above doesn't work, trying to shift too far. split it up maybe?
+	int wrongway1 = version + sequence + type + paylen;
+	int wrongway2 = source; //possibly revert these to all on one line, but try this way first
+	int wrongway3 = dest;
+	int rightway[3];
+	rightway[1] = htonl(wrongway1);
+	rightway[2] = htonl(wrongway2);
+	rightway[3] = htonl(wrongway3);
+	printf("%x", rightway[1]);
+	printf("%x", rightway[2]);
+	printf("%x", rightway[3]);
 
 	//unsigned short rightway = htons(wrongway); //at the end, when I get all of this into a buffer, do this
-	fwrite(message, 12, 1, output);
+	fwrite(rightway, 12, 1, output);
 
 }
 
