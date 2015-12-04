@@ -104,7 +104,6 @@ void printmessage(FILE *input, unsigned char *next, int tempint, unsigned char *
 	fread(temp, 1, 2, input);
 
 	tempint = temp[1];
-	printf("Length: %d\n", tempint); //prints message length
 	next = calloc(tempint, 1);
 
 	fseek(input, 94, SEEK_SET);
