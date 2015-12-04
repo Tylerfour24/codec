@@ -3,15 +3,69 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+int choosefile(int *choice);
 void makeheaders(FILE *output, const char *empty);
+int craftmeditrik(int *choice);
 
 int main(void)
 {
-	
-	const char *textfile = "hello.txt";
-	FILE *input = fopen(textfile, "r");
-	const char *pcapfile = "hello.pcap";
-	FILE *output = fopen(pcapfile, "w+");
+	int *choice = malloc(sizeof(int));
+	choice = 0;
+	choosefile(choice);
+	craftmeditrik(choice);
+}
+
+int choosefile(int *choice) {
+	printf("Which file are you encoding?\n\n\n0)	Status Pcap\n\n1)	Command Pcap\n\n2)	GPS Pcap\n\n3)	Message Pcap\n\nYour choice here: ");
+	scanf("%d", choice);
+
+	return *choice;
+}
+
+void makeheaders(FILE *output, const char *empty) {
+	int length;
+
+	for(length = 0; length < 82; length++) {
+		fwrite(empty, 1, 1, output);
+	}
+}
+
+int craftmeditrik(int *choice) {
+
+ 	const char *textfile;
+ 	FILE *input;
+ 	const char *pcapfile;
+ 	FILE *output;
+
+	switch(*choice) {
+		case 0:	
+ 			textfile = "status.txt";
+ 			input = fopen(textfile, "r");
+ 			pcapfile = "status.pcap";
+ 			output = fopen(pcapfile, "w+");
+			break;
+		case 1:	
+ 			textfile = "command.txt";
+ 			input = fopen(textfile, "r");
+ 			pcapfile = "command.pcap";
+ 			output = fopen(pcapfile, "w+");
+			break;
+		case 2:	
+ 			textfile = "gps.txt";
+ 			input = fopen(textfile, "r");
+ 			pcapfile = "gps.pcap";
+ 			output = fopen(pcapfile, "w+");
+			break;
+		case 3:	
+ 			textfile = "message.txt";
+ 			input = fopen(textfile, "r");
+ 			pcapfile = "message.pcap";
+ 			output = fopen(pcapfile, "w+");
+			break;
+		default:
+			printf("I don't know what you did, but we're done here.");
+			exit(0);
+	}
 
 	const char empty[1] = {'\0'};
 
@@ -22,55 +76,32 @@ int main(void)
 	unsigned int source = 0;
 	unsigned int dest = 0;
 
-	//unsigned char message[20] = {0};
-	//unsigned int count = 0;
-
 	makeheaders(output, empty);
 
-	//deal with meditrik header first, then payload
-
 	fscanf(input, "Version: %u", &version);
-	fscanf(input, "\nSequence: %u", &sequence);
+	fscanf(input, "\nSequence: %u", &sequence); // scan value of 19
 	fscanf(input, "\nType: %u", &type);
 	fscanf(input, "\nSource: %u", &source);
 	fscanf(input, "\nDestination: %u", &dest);
 
-	if(type == 3) {
- 		fseek(input, 0L, SEEK_END);    
-		paylen = ftell(input);
-		fseek(input, 0L, SEEK_SET); 
-	}
+ 	fseek(input, 0L, SEEK_END);    
+	paylen = ftell(input) - 46;
+	fseek(input, 0L, SEEK_SET);
 
-	//unsigned short wrongway = ( (version << 12) ^ (sequence << 7) ^ type);
-	version = version << 28;
-	printf("version: %d\n", version);
-	sequence = sequence << 19;
-	printf("sequence: %d\n", sequence);
-	type = type << 16;
-	printf("type: %d\n", type);
+	version <<= 28;
+	sequence <<= 21;
+	type <<= 16;
 
 	int wrongway1 = version ^ sequence ^ type ^ paylen;
-	printf("wrongway1: %x\n", wrongway1);
-	int wrongway2 = source; //possibly revert these to all on one line, but try this way first
+	int wrongway2 = source;
 	int wrongway3 = dest;
-	int rightway[3];
-	rightway[1] = htonl(wrongway1);
-	rightway[2] = htonl(wrongway2);
-	rightway[3] = htonl(wrongway3);
-	printf("%x", rightway[1]);
-	printf("%x", rightway[2]);
-	printf("%x", rightway[3]);
+	int header[3];
+	header[0] = wrongway1;
+	header[1] = wrongway2;
+	header[2] = wrongway3;
 
-	//unsigned short rightway = htons(wrongway); //at the end, when I get all of this into a buffer, do this
-	fwrite(rightway, 12, 1, output);
-   // Set seek back to the beginning
+	unsigned int rightway = htonl(*header);
+	fwrite(&rightway, 12, 1, output);
 
-}
-
-void makeheaders(FILE *output, const char *empty) {
-	int length;
-
-	for(length = 0; length < 82; length++) {
-		fwrite(empty, 1, 1, output);
-	}
+	return 0;
 }
