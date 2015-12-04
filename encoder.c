@@ -29,29 +29,28 @@ int main(void)
 
 	//deal with meditrik header first, then payload
 
-	fscanf(input, "Version: %x", &version);
-	fscanf(input, "\nSequence: %x", &sequence);
-	fscanf(input, "\nType: %x", &type);
-	fscanf(input, "\nSource: %x", &source);
-	fscanf(input, "\nDestination: %x", &dest);
+	fscanf(input, "Version: %u", &version);
+	fscanf(input, "\nSequence: %u", &sequence);
+	fscanf(input, "\nType: %u", &type);
+	fscanf(input, "\nSource: %u", &source);
+	fscanf(input, "\nDestination: %u", &dest);
 
 	if(type == 3) {
-		fscanf(input, "\nLength: %x", &paylen); //determine length of hello.txt
-		paylen -= 12;
-		/*fscanf(input, "\n");
-		for(count = 0; count < paylen; count++) {
-			fscanf(input, "%c", message);
-			//printf("%c", message[count]); //never do this again OoO
-		}*/
+ 		fseek(input, 0L, SEEK_END);    
+		paylen = ftell(input);
+		fseek(input, 0L, SEEK_SET); 
 	}
 
 	//unsigned short wrongway = ( (version << 12) ^ (sequence << 7) ^ type);
 	version = version << 28;
-	sequence = sequence << 23;
+	printf("version: %d\n", version);
+	sequence = sequence << 19;
+	printf("sequence: %d\n", sequence);
 	type = type << 16;
-	
-	//the above doesn't work, trying to shift too far. split it up maybe?
-	int wrongway1 = version + sequence + type + paylen;
+	printf("type: %d\n", type);
+
+	int wrongway1 = version ^ sequence ^ type ^ paylen;
+	printf("wrongway1: %x\n", wrongway1);
 	int wrongway2 = source; //possibly revert these to all on one line, but try this way first
 	int wrongway3 = dest;
 	int rightway[3];
@@ -64,6 +63,7 @@ int main(void)
 
 	//unsigned short rightway = htons(wrongway); //at the end, when I get all of this into a buffer, do this
 	fwrite(rightway, 12, 1, output);
+   // Set seek back to the beginning
 
 }
 
