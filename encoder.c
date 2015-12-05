@@ -142,6 +142,7 @@ int craftmeditrik(int *choice) {
 
 	unsigned int rightway = htonl(*header);
 	fwrite(&rightway, 12, 1, output);
+	//As of this point, everything but the payload has been encoded
 
 	return 0;
 }
