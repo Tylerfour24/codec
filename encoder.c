@@ -9,9 +9,17 @@ int craftmeditrik(int *choice);
 
 int main(void)
 {
-	int *choice = malloc(sizeof(int));
-	choice = 0;
-	choosefile(choice);
+	int *choice;
+	choice = malloc(sizeof(int));
+	if(choice == 0) {
+		printf("ERROR: Malloc failed, I gotta go fix some stuff.\n");
+		return 1;
+	}
+	if(choosefile(choice) != 0) {
+		printf("I don't know exactly what you did, but we're done here.\n");
+		return 1; 
+	}
+	//*choice = 0;
 	craftmeditrik(choice);
 }
 
@@ -19,7 +27,7 @@ int choosefile(int *choice) {
 	printf("Which file are you encoding?\n\n\n0)	Status Pcap\n\n1)	Command Pcap\n\n2)	GPS Pcap\n\n3)	Message Pcap\n\nYour choice here: ");
 	scanf("%d", choice);
 
-	return *choice;
+	return 0;
 }
 
 void makeheaders(FILE *output, const char *empty) {
@@ -41,29 +49,61 @@ int craftmeditrik(int *choice) {
 		case 0:	
  			textfile = "status.txt";
  			input = fopen(textfile, "r");
+			if(input == NULL) {
+				printf("No input file found. You need to provide status.txt\n");
+				return 1;
+			}
  			pcapfile = "status.pcap";
  			output = fopen(pcapfile, "w+");
+			if(output == NULL) {
+				printf("Unable to creatue output file. Check to see if you have permission to write to drive.\n");
+				return 1;
+			}
 			break;
 		case 1:	
  			textfile = "command.txt";
  			input = fopen(textfile, "r");
+ 			if(input == NULL) {
+				printf("No input file found. You need to provide command.txt\n");
+				return 1;
+			}
  			pcapfile = "command.pcap";
  			output = fopen(pcapfile, "w+");
+			if(output == NULL) {
+				printf("Unable to creatue output file. Check to see if you have permission to write to drive.\n");
+				return 1;
+			}
 			break;
 		case 2:	
  			textfile = "gps.txt";
  			input = fopen(textfile, "r");
+ 			if(input == NULL) {
+				printf("No input file found. You need to provide gps.txt\n");
+				return 1;
+			}
  			pcapfile = "gps.pcap";
  			output = fopen(pcapfile, "w+");
+			if(output == NULL) {
+				printf("Unable to creatue output file. Check to see if you have permission to write to drive.\n");
+				return 1;
+			}
 			break;
 		case 3:	
  			textfile = "message.txt";
  			input = fopen(textfile, "r");
+ 			if(input == NULL) {
+				printf("No input file found. You need to provide message.txt\n");
+				return 1;
+			}
  			pcapfile = "message.pcap";
  			output = fopen(pcapfile, "w+");
+			if(output == NULL) {
+				printf("Unable to creatue output file. Check to see if you have permission to write to drive.\n");
+				return 1;
+			}
 			break;
 		default:
-			printf("I don't know what you did, but we're done here.");
+			printf("You need to pick a valid option.\n");
 			exit(0);
 	}
 
